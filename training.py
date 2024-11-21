@@ -9,7 +9,7 @@ from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
 from pyspark.sql.functions import col
 
 def clean_data(data_frame):
-    """Cleans data by casting columns to double and stripping extra quotes."""
+    #Cleans data by casting columns to double and stripping extra quotes.
     return data_frame.select(*(col(column).cast("double").alias(column.strip('\"')) for column in data_frame.columns))
 
 if __name__ == "__main__":
@@ -17,7 +17,6 @@ if __name__ == "__main__":
     spark = SparkSession.builder.appName("WineQualityPrediction").getOrCreate()
     spark.sparkContext.setLogLevel('ERROR')
 
-    # Configuration for using S3
     spark._jsc.hadoopConfiguration().set("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
 
     training_data_path = "s3://path/to/TrainingDataset.csv"
@@ -40,7 +39,6 @@ if __name__ == "__main__":
         
         pipeline = Pipeline(stages=[assembler, indexer, rf_classifier])
 
-        # Set up CrossValidator
         param_grid = ParamGridBuilder() \
             .addGrid(rf_classifier.maxDepth, [5, 10, 15]) \
             .addGrid(rf_classifier.numTrees, [50, 100, 150]) \
@@ -51,11 +49,9 @@ if __name__ == "__main__":
         cv = CrossValidator(estimator=pipeline, estimatorParamMaps=param_grid, evaluator=evaluator, numFolds=5)
         cv_model = cv.fit(training_data_frame)
 
-        # Select the best model
         best_model = cv_model.bestModel
         print(f"Best model parameters: {best_model.stages[-1].extractParamMap()}")
 
-        # Save the best model
         print(f"Saving the best model to {model_output_path}")
         best_model.write().overwrite().save(model_output_path)
 
