@@ -1,14 +1,15 @@
 import sys
 import os
+
 from pyspark.sql import SparkSession
 from pyspark.ml.feature import VectorAssembler
 from pyspark.ml import PipelineModel
 from pyspark.sql.functions import col
+
 from pyspark.mllib.evaluation import MulticlassMetrics
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 
 def clean_data(data_frame):
-    """Cleans data by casting columns to double and stripping extra quotes."""
     return data_frame.select(*(col(column).cast("double").alias(column.strip('\"')) for column in data_frame.columns))
 
 if __name__ == "__main__":
