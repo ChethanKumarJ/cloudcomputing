@@ -23,9 +23,9 @@ if __name__ == "__main__":
     sc.setLogLevel('ERROR')
 
     # Setup paths
-    local_path = "ValidationDataset.csv"  # Should be the absolute path
-    trained_model_path = "spark-model"  # Should be the absolute path
-    trained_model_output_path = "/opt/spark-model"  # Adjust if saving to a different location or S3
+    local_path = "ValidationDataset.csv"  
+    trained_model_path = "spark-model"  
+    trained_model_output_path = "/opt/spark-model"  
 
     try:
         # Load and clean the validation dataset
