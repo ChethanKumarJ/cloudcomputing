@@ -11,19 +11,18 @@ import scala.Tuple2;
 public class WineQualityPrediction {
     public static void main(String[] args) {
         System.out.println("Starting Spark Application");
-
         SparkSession spark = SparkSession.builder()
                 .appName("WineQualityPrediction")
                 .config("spark.some.config.option", "config-value")
                 .getOrCreate();
 
         spark.sparkContext().setLogLevel("ERROR");
-
         String localPath = "ValidationDataset.csv";
         String trainedModelPath = "spark-model";
         String trainedModelOutputPath = "/opt/spark-model";
 
         try {
+            System.out.println("Loading validation data from " + localPath);
             Dataset<Row> rawDataFrame = spark.read()
                     .format("csv")
                     .option("header", "true")
@@ -32,15 +31,9 @@ public class WineQualityPrediction {
                     .load(localPath);
 
             Dataset<Row> cleanDataFrame = cleanData(rawDataFrame);
-
-            VectorAssembler assembler = new VectorAssembler()
-                    .setInputCols(new String[]{"fixed acidity", "volatile acidity", "citric acid", "residual sugar", "chlorides", "free sulfur dioxide", "total sulfur dioxide", "density", "pH", "sulphates", "alcohol"})
-                    .setOutputCol("features");
-            Dataset<Row> assembledDataFrame = assembler.transform(cleanDataFrame).withColumnRenamed("quality", "label");
-
+            System.out.println("Loading the trained model from " + trainedModelPath);
             PipelineModel predictionModel = PipelineModel.load(trainedModelPath);
-            Dataset<Row> predictions = predictionModel.transform(assembledDataFrame);
-
+            Dataset<Row> predictions = predictionModel.transform(cleanDataFrame);
             MulticlassClassificationEvaluator accuracyEvaluator = new MulticlassClassificationEvaluator()
                     .setLabelCol("label")
                     .setPredictionCol("prediction")
@@ -55,7 +48,7 @@ public class WineQualityPrediction {
             MulticlassMetrics predictionMetrics = new MulticlassMetrics(predictionResults.rdd());
             double weightedF1Score = predictionMetrics.weightedFMeasure();
             System.out.println("Weighted F1 Score of wine prediction model = " + weightedF1Score);
-
+            System.out.println("Saving the trained model to " + trainedModelOutputPath);
             predictionModel.write().overwrite().save(trainedModelOutputPath);
 
         } catch (Exception e) {
