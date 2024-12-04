@@ -1,27 +1,14 @@
-# Use an official Python runtime as a parent image
+# Use an official OpenJDK runtime as a parent image
 FROM openjdk:8-jre-slim
 
-# Set environment variables for Miniconda
-ENV PATH="/opt/miniconda3/bin:${PATH}"
-ENV PYSPARK_PYTHON="/opt/miniconda3/bin/python"
+# Set environment variables for Spark
 ENV SPARK_HOME=/opt/spark
+ENV PATH="$SPARK_HOME/bin:${PATH}"
 
-# Update and install necessary packages, install Miniconda
+# Update and install necessary packages
 RUN apt-get update && \
     apt-get install -y curl bzip2 wget --no-install-recommends && \
-    curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh && \
-    bash /tmp/miniconda.sh -b -p /opt/miniconda3 && \
-    rm -rf /var/lib/apt/lists/* /tmp/miniconda.sh
-
-# Configure Miniconda
-RUN conda config --set auto_update_conda false && \
-    conda config --set show_channel_urls true
-
-# Install Python packages
-RUN conda install --yes --freeze-installed \
-    numpy pandas && \
-    pip install --no-cache-dir pyspark==3.5.0 awscli && \
-    conda clean -afy
+    rm -rf /var/lib/apt/lists/*
 
 # Download and set up Spark
 WORKDIR /opt
@@ -35,9 +22,14 @@ RUN wget -q -O /opt/spark/jars/aws-java-sdk-1.8.0.jar https://repo1.maven.org/ma
     wget -q -O /opt/spark/jars/hadoop-aws-3.0.0.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.0.0/hadoop-aws-3.0.0.jar
 
 # Copy application files into the container
-COPY prediction.py /opt/
+COPY WineQualityPrediction.java /opt/
 COPY ValidationDataset.csv /opt/
 COPY spark-model /opt/spark-model/
 
+# Compile Java application
+WORKDIR /opt
+RUN apt-get update && apt-get install -y default-jdk && \
+    javac -cp "$SPARK_HOME/jars/*" WineQualityPrediction.java
+
 # Set the entry point and default command
-CMD ["spark-submit", "/opt/prediction.py", "/opt/ValidationDataset.csv"]
+CMD ["java", "-cp", "/opt/spark/jars/*:/opt", "WineQualityPrediction"]
