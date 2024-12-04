@@ -33,3 +33,5 @@ RUN apt-get update && apt-get install -y default-jdk && \
 
 # Set the entry point and default command
 CMD ["java", "-cp", "/opt/spark/jars/*:/opt", "WineQualityPrediction"]
+
+# This setup facilitates distributed processing of large datasets, enabling efficient training and prediction using Apache Spark.
