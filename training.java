@@ -23,8 +23,8 @@ public class WineQualityPrediction {
                 .getOrCreate();
 
         spark.sparkContext().setLogLevel("ERROR");
-        String trainingDataPath = "s3://path/to/TrainingDataset.csv";
-        String modelOutputPath = "s3://path/to/spark-model";
+        String trainingDataPath = "TrainingDataset.csv";
+        String modelOutputPath = "spark-model";
 
         try {
             System.out.println("Loading training data from " + trainingDataPath);
